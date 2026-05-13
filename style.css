@@ -577,11 +577,15 @@ body {
 .activity-panel {
   width: 288px;
   flex-shrink: 0;
-  display: flex;
+  display: none;
   flex-direction: column;
   border-left: 1px solid var(--divider);
   background: var(--surface);
   overflow: hidden;
+}
+
+.activity-panel.open {
+  display: flex;
 }
 
 .activity-header {

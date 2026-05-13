@@ -21,14 +21,12 @@
   // ── Auth ──────────────────────────────────────────────────────────────────
   function showAuth() {
     document.getElementById('authOverlay').style.display = 'flex';
-    document.getElementById('logoutBtn').style.display   = 'none';
     document.getElementById('shareBtn').style.display    = 'none';
     showFormView();
   }
 
   function hideAuth() {
     document.getElementById('authOverlay').style.display = 'none';
-    document.getElementById('logoutBtn').style.display   = '';
     document.getElementById('authError').textContent     = '';
   }
 
@@ -287,6 +285,7 @@
   }
 
   async function addCard(col, text) {
+    if (!currentBoard) { console.error('currentBoard is null'); return; }
     const card = {
       id: uid(), user_id: currentUser.id, board_id: currentBoard.id,
       text, col, tags: [], priority: null, deadline: null,
@@ -386,14 +385,8 @@
   function toggleActivityPanel() {
     const panel  = document.getElementById('activityPanel');
     const btn    = document.getElementById('activityBtn');
-    const hidden = panel.hasAttribute('hidden');
-    if (hidden) {
-      panel.removeAttribute('hidden');
-      btn.classList.add('active');
-    } else {
-      panel.setAttribute('hidden', '');
-      btn.classList.remove('active');
-    }
+    const isOpen = panel.classList.toggle('open');
+    btn.classList.toggle('active', isOpen);
   }
 
   // ── Real-time ─────────────────────────────────────────────────────────────
