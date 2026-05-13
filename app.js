@@ -72,6 +72,7 @@
   function setUser(user) {
     currentUser = user;
     document.getElementById('userLabel').textContent = user ? user.email : 'Guest';
+    document.getElementById('logoutBtn').style.display = user ? '' : 'none';
   }
 
   // ── Boards ────────────────────────────────────────────────────────────────
@@ -626,9 +627,9 @@
     document.getElementById('backToLoginBtn').addEventListener('click', () => {
       isSignUp = true; toggleAuthMode(); showFormView();
     });
-    document.getElementById('logoutBtn').addEventListener('click', () => {
-      if (realtimeChannel) sb.removeChannel(realtimeChannel);
-      sb.auth.signOut();
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+      if (realtimeChannel) { sb.removeChannel(realtimeChannel); realtimeChannel = null; }
+      await sb.auth.signOut();
     });
 
     // Theme
@@ -662,13 +663,11 @@
 
     // Auth state listener
     sb.auth.onAuthStateChange(async (_event, session) => {
-      console.log('auth event:', _event, '/ board:', !!currentBoard);
       if (session?.user) {
         setUser(session.user);
         hideAuth();
         if (!currentBoard) {
           const allBoards = await loadBoards();
-          console.log('boards loaded:', allBoards.length);
           if (allBoards.length > 0) await selectBoard(allBoards[0]);
         }
       } else {
