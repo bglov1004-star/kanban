@@ -8,10 +8,9 @@
 </head>
 <body>
 
-  <!-- 로그인 오버레이 -->
+  <!-- ── 로그인 오버레이 ──────────────────────────────────────────────────── -->
   <div id="authOverlay" class="auth-overlay">
     <div class="auth-card">
-
       <div class="auth-header">
         <div class="auth-brand">
           <svg width="36" height="36" viewBox="0 0 36 36" fill="none" aria-hidden="true">
@@ -32,7 +31,6 @@
         <p class="auth-header-sub">작업을 체계적으로 관리하세요</p>
       </div>
 
-      <!-- 로그인/회원가입 폼 -->
       <div id="authFormView" class="auth-body">
         <h2 id="authTitle" class="auth-form-title">로그인</h2>
         <form id="authForm" class="auth-form" novalidate>
@@ -53,7 +51,6 @@
         </div>
       </div>
 
-      <!-- 이메일 인증 대기 화면 -->
       <div id="authVerifyView" class="auth-body auth-verify" style="display:none">
         <div class="verify-icon-wrap">
           <svg width="64" height="64" viewBox="0 0 64 64" fill="none" aria-hidden="true">
@@ -72,13 +69,92 @@
         </p>
         <button type="button" id="backToLoginBtn" class="auth-back-btn">← 로그인으로 돌아가기</button>
       </div>
-
     </div>
   </div>
 
+  <!-- ── 공유 모달 ────────────────────────────────────────────────────────── -->
+  <div id="shareModal" class="modal-overlay" hidden>
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>보드 공유</h3>
+        <button id="closeShareBtn" class="modal-close">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="inviteForm" class="invite-form">
+          <input id="inviteEmail" type="email" placeholder="초대할 이메일 주소" required>
+          <button type="submit">초대</button>
+        </form>
+        <p id="inviteMsg" class="invite-msg"></p>
+        <p class="section-label">현재 멤버</p>
+        <ul id="memberList" class="member-list"></ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 카드 편집 모달 ────────────────────────────────────────────────────── -->
+  <div id="cardModal" class="modal-overlay" hidden>
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>카드 편집</h3>
+        <button id="closeCardModalBtn" class="modal-close">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-field">
+          <label for="cardModalText">내용</label>
+          <textarea id="cardModalText" rows="3"></textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-field">
+            <label for="cardModalDeadline">마감일</label>
+            <input type="date" id="cardModalDeadline">
+          </div>
+          <div class="form-field">
+            <label for="cardModalPriority">우선순위</label>
+            <select id="cardModalPriority">
+              <option value="">없음</option>
+              <option value="low">낮음</option>
+              <option value="medium">보통</option>
+              <option value="high">높음</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-field">
+          <label for="cardModalTags">태그
+            <span class="label-hint">쉼표로 구분</span>
+          </label>
+          <input type="text" id="cardModalTags" placeholder="예: 디자인, 프론트엔드">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="saveCardBtn" class="btn-confirm">저장</button>
+        <button id="cancelCardBtn" class="btn-cancel">취소</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Navbar ────────────────────────────────────────────────────────────── -->
   <nav class="navbar">
-    <span class="nav-logo">Kanban</span>
+    <div class="nav-left">
+      <span class="nav-logo">Kanban</span>
+      <div class="board-nav">
+        <span id="boardName" class="board-name"></span>
+        <select id="boardSelect" class="board-select" style="display:none"></select>
+      </div>
+    </div>
     <div class="nav-right">
+      <button id="shareBtn" class="nav-btn" style="display:none">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+          <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+        </svg>
+        공유
+      </button>
+      <button id="activityBtn" class="nav-btn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+        </svg>
+        활동
+      </button>
       <div class="user-chip">
         <svg class="icon-user" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
@@ -90,14 +166,10 @@
       <button id="themeToggle" aria-label="테마 전환">
         <svg class="icon-sun" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <circle cx="12" cy="12" r="5"/>
-          <line x1="12" y1="1" x2="12" y2="3"/>
-          <line x1="12" y1="21" x2="12" y2="23"/>
-          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
-          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
-          <line x1="1" y1="12" x2="3" y2="12"/>
-          <line x1="21" y1="12" x2="23" y2="12"/>
-          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
-          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+          <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+          <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
         </svg>
         <svg class="icon-moon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
@@ -106,34 +178,43 @@
     </div>
   </nav>
 
-  <main class="board">
-    <div class="column" data-col="todo">
-      <div class="col-header">
-        <h2>To Do</h2>
-        <span class="col-count">0</span>
+  <!-- ── App Layout ────────────────────────────────────────────────────────── -->
+  <div class="app-layout">
+    <main class="board">
+      <div class="column" data-col="todo">
+        <div class="col-header">
+          <h2>To Do</h2>
+          <span class="col-count">0</span>
+        </div>
+        <div class="card-list" id="list-todo"></div>
+        <button class="add-btn" data-col="todo">+ Add card</button>
       </div>
-      <div class="card-list" id="list-todo"></div>
-      <button class="add-btn" data-col="todo">+ Add card</button>
-    </div>
+      <div class="column" data-col="in-progress">
+        <div class="col-header">
+          <h2>In Progress</h2>
+          <span class="col-count">0</span>
+        </div>
+        <div class="card-list" id="list-in-progress"></div>
+        <button class="add-btn" data-col="in-progress">+ Add card</button>
+      </div>
+      <div class="column" data-col="done">
+        <div class="col-header">
+          <h2>Done</h2>
+          <span class="col-count">0</span>
+        </div>
+        <div class="card-list" id="list-done"></div>
+        <button class="add-btn" data-col="done">+ Add card</button>
+      </div>
+    </main>
 
-    <div class="column" data-col="in-progress">
-      <div class="col-header">
-        <h2>In Progress</h2>
-        <span class="col-count">0</span>
+    <aside id="activityPanel" class="activity-panel" hidden>
+      <div class="activity-header">
+        <h3>활동 로그</h3>
+        <button id="closeActivityBtn" class="modal-close">✕</button>
       </div>
-      <div class="card-list" id="list-in-progress"></div>
-      <button class="add-btn" data-col="in-progress">+ Add card</button>
-    </div>
-
-    <div class="column" data-col="done">
-      <div class="col-header">
-        <h2>Done</h2>
-        <span class="col-count">0</span>
-      </div>
-      <div class="card-list" id="list-done"></div>
-      <button class="add-btn" data-col="done">+ Add card</button>
-    </div>
-  </main>
+      <ul id="activityList" class="activity-list"></ul>
+    </aside>
+  </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
   <script src="app.js" defer></script>
