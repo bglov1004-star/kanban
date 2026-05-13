@@ -267,7 +267,7 @@
 
   // ── Card Storage ──────────────────────────────────────────────────────────
   function uid() {
-    return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    return crypto.randomUUID();
   }
 
   async function loadCards() {
@@ -629,7 +629,7 @@
     });
     document.getElementById('logoutBtn').addEventListener('click', async () => {
       if (realtimeChannel) { sb.removeChannel(realtimeChannel); realtimeChannel = null; }
-      await sb.auth.signOut();
+      try { await sb.auth.signOut(); } catch (_) {}
       setUser(null);
       currentBoard = null;
       boards = []; cards = []; activities = [];
