@@ -76,32 +76,38 @@
 
   // ── Boards ────────────────────────────────────────────────────────────────
   async function loadBoards() {
-    const { data: owned } = await sb.from('boards')
+    const { data: owned, error: e1 } = await sb.from('boards')
       .select('*')
       .eq('owner_id', currentUser.id)
       .order('created_at', { ascending: true });
+    if (e1) console.error('boards fetch error:', e1);
 
-    const { data: memberData } = await sb.from('board_members')
+    const { data: memberData, error: e2 } = await sb.from('board_members')
       .select('board_id')
       .eq('user_id', currentUser.id);
+    if (e2) console.error('board_members fetch error:', e2);
 
     let joined = [];
     if (memberData?.length) {
       const ids = memberData.map(m => m.board_id);
-      const { data: joinedBoards } = await sb.from('boards').select('*').in('id', ids);
+      const { data: joinedBoards, error: e3 } = await sb.from('boards').select('*').in('id', ids);
+      if (e3) console.error('joined boards fetch error:', e3);
       joined = joinedBoards || [];
     }
 
     boards = [...(owned || []), ...joined];
 
     if (boards.length === 0) {
-      const { data: newBoard } = await sb.from('boards')
+      const { data: newBoard, error: e4 } = await sb.from('boards')
         .insert({ name: '내 보드', owner_id: currentUser.id })
         .select()
         .single();
+      if (e4) {
+        console.error('board create error:', e4);
+        return [];
+      }
       if (newBoard) {
         boards = [newBoard];
-        // 기존 cards(board_id 없는 것) 마이그레이션
         await sb.from('cards')
           .update({ board_id: newBoard.id })
           .eq('user_id', currentUser.id)
