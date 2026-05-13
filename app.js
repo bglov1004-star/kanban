@@ -15,6 +15,7 @@
   function showAuth() {
     document.getElementById('authOverlay').style.display = 'flex';
     document.getElementById('logoutBtn').style.display   = 'none';
+    showFormView();
   }
 
   function hideAuth() {
@@ -23,21 +24,32 @@
     document.getElementById('authError').textContent     = '';
   }
 
+  function showFormView() {
+    document.getElementById('authFormView').style.display   = '';
+    document.getElementById('authVerifyView').style.display = 'none';
+    document.getElementById('authError').textContent        = '';
+  }
+
+  function showVerify(email) {
+    document.getElementById('verifyEmail').textContent      = email;
+    document.getElementById('authFormView').style.display   = 'none';
+    document.getElementById('authVerifyView').style.display = '';
+  }
+
   async function handleAuthSubmit(e) {
     e.preventDefault();
     const email    = document.getElementById('authEmail').value.trim();
     const password = document.getElementById('authPassword').value;
     const errEl    = document.getElementById('authError');
-    errEl.style.color  = '';
-    errEl.textContent  = '';
+    errEl.style.color = '';
+    errEl.textContent = '';
 
     if (isSignUp) {
       const { error } = await sb.auth.signUp({ email, password });
       if (error) {
         errEl.textContent = error.message;
       } else {
-        errEl.style.color = 'var(--primary)';
-        errEl.textContent = '가입 완료! 이메일을 확인해주세요.';
+        showVerify(email);
       }
     } else {
       const { error } = await sb.auth.signInWithPassword({ email, password });
@@ -48,11 +60,11 @@
 
   function toggleAuthMode() {
     isSignUp = !isSignUp;
-    document.getElementById('authTitle').textContent     = isSignUp ? '회원가입'            : '로그인';
-    document.getElementById('authSubmitBtn').textContent = isSignUp ? '가입하기'            : '로그인';
-    document.getElementById('authToggleBtn').textContent = isSignUp ? '로그인'              : '회원가입';
-    document.getElementById('authToggleText').textContent= isSignUp ? '이미 계정이 있으신가요?' : '계정이 없으신가요?';
-    document.getElementById('authError').textContent     = '';
+    document.getElementById('authTitle').textContent      = isSignUp ? '회원가입'             : '로그인';
+    document.getElementById('authSubmitBtn').textContent  = isSignUp ? '가입하기'             : '로그인';
+    document.getElementById('authToggleBtn').textContent  = isSignUp ? '로그인'               : '회원가입';
+    document.getElementById('authToggleText').textContent = isSignUp ? '이미 계정이 있으신가요?' : '계정이 없으신가요?';
+    document.getElementById('authError').textContent      = '';
   }
 
   // ── User ──────────────────────────────────────────────────────────────────
@@ -274,6 +286,11 @@
 
     document.getElementById('authForm').addEventListener('submit', handleAuthSubmit);
     document.getElementById('authToggleBtn').addEventListener('click', toggleAuthMode);
+    document.getElementById('backToLoginBtn').addEventListener('click', () => {
+      isSignUp = true;   // toggleAuthMode가 반전하므로 true로 세팅 후 호출하면 login 상태로 전환
+      toggleAuthMode();
+      showFormView();
+    });
     document.getElementById('logoutBtn').addEventListener('click', () => sb.auth.signOut());
     document.getElementById('themeToggle').addEventListener('click', toggleTheme);
 
