@@ -630,6 +630,12 @@
     document.getElementById('logoutBtn').addEventListener('click', async () => {
       if (realtimeChannel) { sb.removeChannel(realtimeChannel); realtimeChannel = null; }
       await sb.auth.signOut();
+      setUser(null);
+      currentBoard = null;
+      boards = []; cards = []; activities = [];
+      renderAll();
+      renderActivities();
+      showAuth();
     });
 
     // Theme
