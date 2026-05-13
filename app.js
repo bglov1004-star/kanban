@@ -569,7 +569,7 @@
       if (dragId) moveCard(dragId, list.closest('.column').dataset.col);
     });
 
-    board.addEventListener('click', e => {
+    board.addEventListener('click', async e => {
       // 삭제 버튼
       const del = e.target.closest('.card-del');
       if (del) { deleteCard(del.closest('.card').dataset.id); return; }
@@ -591,7 +591,7 @@
         const form  = confirmBtn.closest('.add-form');
         const colEl = form.closest('.column');
         const text  = form.querySelector('.add-input').value.trim();
-        if (text) { addCard(colEl.dataset.col, text); closeAddForm(colEl); }
+        if (text) { await addCard(colEl.dataset.col, text); closeAddForm(colEl); }
         return;
       }
 
