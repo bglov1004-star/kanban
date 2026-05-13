@@ -291,22 +291,44 @@
       id: uid(), user_id: currentUser.id, board_id: currentBoard.id,
       text, col, tags: [], priority: null, deadline: null,
     };
+    cards.push(card);
+    renderAll();
     const { error } = await sb.from('cards').insert(card);
-    if (!error) await logActivity('추가됨', text);
+    if (error) {
+      console.error(error);
+      cards = cards.filter(c => c.id !== card.id);
+      renderAll();
+    } else {
+      await logActivity('추가됨', text);
+    }
   }
 
   async function deleteCard(id) {
     const card = cards.find(c => c.id === id);
+    cards = cards.filter(c => c.id !== id);
+    renderAll();
     const { error } = await sb.from('cards').delete().eq('id', id);
-    if (!error && card) await logActivity('삭제됨', card.text);
+    if (error) {
+      console.error(error);
+      if (card) { cards.push(card); renderAll(); }
+    } else if (card) {
+      await logActivity('삭제됨', card.text);
+    }
   }
 
   async function moveCard(id, col) {
     const card = cards.find(c => c.id === id);
     if (!card || card.col === col) return;
+    const prevCol = card.col;
+    card.col = col;
+    renderAll();
     const { error } = await sb.from('cards').update({ col }).eq('id', id);
-    if (!error && card) {
-      await logActivity(`${COL_LABEL[card.col]} → ${COL_LABEL[col]}`, card.text);
+    if (error) {
+      console.error(error);
+      card.col = prevCol;
+      renderAll();
+    } else {
+      await logActivity(`${COL_LABEL[prevCol]} → ${COL_LABEL[col]}`, card.text);
     }
   }
 
