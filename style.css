@@ -295,3 +295,122 @@ body {
 .btn-cancel:hover {
   background: var(--divider);
 }
+
+/* Auth overlay */
+.auth-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(4px);
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 360px;
+  margin: 1rem;
+  padding: 2rem;
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.auth-logo {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: 0.25rem;
+}
+
+.auth-card h2 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-bottom: 1.25rem;
+  color: var(--text);
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.auth-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--divider);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.9rem;
+  transition: border-color 0.2s;
+}
+
+.auth-input:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.auth-input::placeholder {
+  color: var(--secondary);
+}
+
+.auth-error {
+  min-height: 1.2em;
+  font-size: 0.8rem;
+  color: #F44336;
+}
+
+.auth-submit {
+  padding: 10px;
+  border: none;
+  border-radius: 6px;
+  background: var(--primary);
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.auth-submit:hover {
+  background: var(--primary-dk);
+}
+
+.auth-toggle {
+  margin-top: 1rem;
+  font-size: 0.8rem;
+  color: var(--secondary);
+  text-align: center;
+}
+
+.auth-toggle button {
+  border: none;
+  background: none;
+  color: var(--primary);
+  font-size: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0 2px;
+}
+
+/* Logout button */
+.logout-btn {
+  padding: 4px 12px;
+  border: 1px solid var(--divider);
+  border-radius: 6px;
+  background: none;
+  color: var(--secondary);
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.logout-btn:hover {
+  background: var(--divider);
+  color: var(--text);
+}

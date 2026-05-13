@@ -1,58 +1,129 @@
-// file:// 프로토콜에서 ES module이 동작하지 않으므로 IIFE 패턴 사용
 (function () {
+  // ── Supabase 설정 (값은 Supabase 대시보드 → Project Settings → API에서 복사) ──
+  const SUPABASE_URL      = 'https://uopsymccnnzcphhxmswi.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVvcHN5bWNjbm56Y3BoaHhtc3dpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2MDc5NzEsImV4cCI6MjA5NDE4Mzk3MX0.BbOUzBPvK5iXKqwazvAfqSMYL3--MohPZhZwOebba3g';
+
+  const sb      = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   const COLUMNS = ['todo', 'in-progress', 'done'];
 
-  let currentUser = { id: 'guest', label: 'Guest' };
+  let currentUser = null;
   let cards       = [];
   let dragId      = null;
+  let isSignUp    = false;
 
-  // v2: 이 객체의 메서드를 Supabase 호출로 교체한다
-  const Storage = {
-    getCards(userId) {
-      try {
-        return JSON.parse(localStorage.getItem(`kanban-cards-${userId}`) || '[]');
-      } catch {
-        return [];
+  // ── Auth UI ───────────────────────────────────────────────────────────────
+  function showAuth() {
+    document.getElementById('authOverlay').style.display = 'flex';
+    document.getElementById('logoutBtn').style.display   = 'none';
+  }
+
+  function hideAuth() {
+    document.getElementById('authOverlay').style.display = 'none';
+    document.getElementById('logoutBtn').style.display   = '';
+    document.getElementById('authError').textContent     = '';
+  }
+
+  async function handleAuthSubmit(e) {
+    e.preventDefault();
+    const email    = document.getElementById('authEmail').value.trim();
+    const password = document.getElementById('authPassword').value;
+    const errEl    = document.getElementById('authError');
+    errEl.style.color  = '';
+    errEl.textContent  = '';
+
+    if (isSignUp) {
+      const { error } = await sb.auth.signUp({ email, password });
+      if (error) {
+        errEl.textContent = error.message;
+      } else {
+        errEl.style.color = 'var(--primary)';
+        errEl.textContent = '가입 완료! 이메일을 확인해주세요.';
       }
-    },
-    saveCards(userId, data) {
-      localStorage.setItem(`kanban-cards-${userId}`, JSON.stringify(data));
-    },
-  };
+    } else {
+      const { error } = await sb.auth.signInWithPassword({ email, password });
+      if (error) errEl.textContent = error.message;
+      // 성공 시 onAuthStateChange가 hideAuth + loadCards 처리
+    }
+  }
 
+  function toggleAuthMode() {
+    isSignUp = !isSignUp;
+    document.getElementById('authTitle').textContent     = isSignUp ? '회원가입'            : '로그인';
+    document.getElementById('authSubmitBtn').textContent = isSignUp ? '가입하기'            : '로그인';
+    document.getElementById('authToggleBtn').textContent = isSignUp ? '로그인'              : '회원가입';
+    document.getElementById('authToggleText').textContent= isSignUp ? '이미 계정이 있으신가요?' : '계정이 없으신가요?';
+    document.getElementById('authError').textContent     = '';
+  }
+
+  // ── User ──────────────────────────────────────────────────────────────────
+  function setUser(user) {
+    currentUser = user;
+    document.getElementById('userLabel').textContent = user ? user.email : 'Guest';
+  }
+
+  // ── Card Storage (Supabase) ───────────────────────────────────────────────
+  async function fetchCards() {
+    const { data, error } = await sb
+      .from('cards')
+      .select('*')
+      .eq('user_id', currentUser.id)
+      .order('created_at', { ascending: true });
+    if (error) { console.error(error); return []; }
+    return data;
+  }
+
+  async function loadCards() {
+    cards = await fetchCards();
+    if (cards.length === 0) {
+      const samples = [
+        { id: uid(), user_id: currentUser.id, text: 'README 작성',           col: 'todo'        },
+        { id: uid(), user_id: currentUser.id, text: '드래그 앤 드롭 테스트', col: 'in-progress' },
+        { id: uid(), user_id: currentUser.id, text: '칸반 보드 설계 완료',   col: 'done'        },
+      ];
+      const { error } = await sb.from('cards').insert(samples);
+      if (!error) cards = samples;
+    }
+    renderAll();
+  }
+
+  // ── Card Operations ───────────────────────────────────────────────────────
   function uid() {
     return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
   }
 
-  function initUser() {
-    currentUser = { id: 'guest', label: 'Guest' };
-    document.getElementById('userLabel').textContent = currentUser.label;
+  async function addCard(col, text) {
+    const card = { id: uid(), user_id: currentUser.id, text, col };
+    cards.push(card);
+    renderAll();
+    const { error } = await sb.from('cards').insert(card);
+    if (error) { console.error(error); cards = await fetchCards(); renderAll(); }
   }
 
-  function saveCards() {
-    Storage.saveCards(currentUser.id, cards);
+  async function deleteCard(id) {
+    cards = cards.filter(c => c.id !== id);
+    renderAll();
+    const { error } = await sb.from('cards').delete().eq('id', id);
+    if (error) { console.error(error); cards = await fetchCards(); renderAll(); }
   }
 
-  function loadCards() {
-    cards = Storage.getCards(currentUser.id);
-    if (cards.length === 0) {
-      cards = [
-        { id: uid(), user_id: currentUser.id, text: 'README 작성', col: 'todo' },
-        { id: uid(), user_id: currentUser.id, text: '드래그 앤 드롭 테스트', col: 'in-progress' },
-        { id: uid(), user_id: currentUser.id, text: '칸반 보드 설계 완료', col: 'done' },
-      ];
-      saveCards();
-    }
+  async function moveCard(id, col) {
+    const card = cards.find(c => c.id === id);
+    if (!card || card.col === col) return;
+    card.col = col;
+    renderAll();
+    const { error } = await sb.from('cards').update({ col }).eq('id', id);
+    if (error) { console.error(error); cards = await fetchCards(); renderAll(); }
   }
 
+  // ── Render ────────────────────────────────────────────────────────────────
   function createCardEl(card) {
     const el = document.createElement('div');
-    el.className = 'card';
-    el.draggable = true;
+    el.className  = 'card';
+    el.draggable  = true;
     el.dataset.id = card.id;
 
     const text = document.createElement('span');
-    text.className = 'card-text';
+    text.className   = 'card-text';
     text.textContent = card.text;
 
     const del = document.createElement('button');
@@ -68,39 +139,36 @@
   function renderColumn(col) {
     const list = document.getElementById(`list-${col}`);
     list.innerHTML = '';
-
-    const mine = cards.filter(c => c.col === col && c.user_id === currentUser.id);
+    const mine = cards.filter(c => c.col === col);
     mine.forEach(card => list.appendChild(createCardEl(card)));
-
-    const colEl = list.closest('.column');
-    colEl.querySelector('.col-count').textContent = mine.length;
+    list.closest('.column').querySelector('.col-count').textContent = mine.length;
   }
 
   function renderAll() {
     COLUMNS.forEach(col => renderColumn(col));
   }
 
+  // ── Add Form ──────────────────────────────────────────────────────────────
   function openAddForm(colEl) {
-    const btn = colEl.querySelector('.add-btn');
-    btn.style.display = 'none';
+    colEl.querySelector('.add-btn').style.display = 'none';
 
-    const form = document.createElement('div');
+    const form     = document.createElement('div');
     form.className = 'add-form';
 
-    const textarea = document.createElement('textarea');
-    textarea.className = 'add-input';
-    textarea.rows = 2;
+    const textarea       = document.createElement('textarea');
+    textarea.className   = 'add-input';
+    textarea.rows        = 2;
     textarea.placeholder = '카드 내용 입력...';
 
-    const actions = document.createElement('div');
+    const actions     = document.createElement('div');
     actions.className = 'add-actions';
 
-    const confirm = document.createElement('button');
-    confirm.className = 'btn-confirm';
+    const confirm       = document.createElement('button');
+    confirm.className   = 'btn-confirm';
     confirm.textContent = '추가';
 
-    const cancel = document.createElement('button');
-    cancel.className = 'btn-cancel';
+    const cancel       = document.createElement('button');
+    cancel.className   = 'btn-cancel';
     cancel.textContent = '취소';
 
     actions.appendChild(confirm);
@@ -108,17 +176,13 @@
     form.appendChild(textarea);
     form.appendChild(actions);
     colEl.appendChild(form);
-
     textarea.focus();
 
     textarea.addEventListener('keydown', e => {
       if (e.key === 'Enter' && e.ctrlKey) {
         e.preventDefault();
         const text = textarea.value.trim();
-        if (text) {
-          addCard(colEl.dataset.col, text);
-          closeAddForm(colEl);
-        }
+        if (text) { addCard(colEl.dataset.col, text); closeAddForm(colEl); }
       } else if (e.key === 'Escape') {
         closeAddForm(colEl);
       }
@@ -132,30 +196,7 @@
     if (btn) btn.style.display = '';
   }
 
-  function addCard(col, text) {
-    cards.push({ id: uid(), user_id: currentUser.id, text, col });
-    saveCards();
-    renderAll();
-  }
-
-  function deleteCard(id) {
-    const idx = cards.findIndex(c => c.id === id);
-    if (idx !== -1) {
-      cards.splice(idx, 1);
-      saveCards();
-      renderAll();
-    }
-  }
-
-  function moveCard(id, col) {
-    const card = cards.find(c => c.id === id);
-    if (card && card.col !== col) {
-      card.col = col;
-      saveCards();
-      renderAll();
-    }
-  }
-
+  // ── Drag & Drop ───────────────────────────────────────────────────────────
   function initDragDrop() {
     const board = document.querySelector('.board');
 
@@ -188,71 +229,65 @@
       const list = e.target.closest('.card-list');
       if (!list) return;
       list.classList.remove('drag-over');
-      if (dragId) {
-        const col = list.closest('.column').dataset.col;
-        moveCard(dragId, col);
-      }
+      if (dragId) moveCard(dragId, list.closest('.column').dataset.col);
     });
 
     board.addEventListener('click', e => {
       const del = e.target.closest('.card-del');
-      if (del) {
-        const card = del.closest('.card');
-        deleteCard(card.dataset.id);
-        return;
-      }
+      if (del) { deleteCard(del.closest('.card').dataset.id); return; }
 
       const addBtn = e.target.closest('.add-btn');
-      if (addBtn) {
-        const colEl = addBtn.closest('.column');
-        openAddForm(colEl);
-        return;
-      }
+      if (addBtn) { openAddForm(addBtn.closest('.column')); return; }
 
       const confirm = e.target.closest('.btn-confirm');
       if (confirm) {
-        const form = confirm.closest('.add-form');
+        const form  = confirm.closest('.add-form');
         const colEl = form.closest('.column');
-        const text = form.querySelector('.add-input').value.trim();
-        if (text) {
-          addCard(colEl.dataset.col, text);
-          closeAddForm(colEl);
-        }
+        const text  = form.querySelector('.add-input').value.trim();
+        if (text) { addCard(colEl.dataset.col, text); closeAddForm(colEl); }
         return;
       }
 
       const cancelBtn = e.target.closest('.btn-cancel');
-      if (cancelBtn) {
-        const colEl = cancelBtn.closest('.column');
-        closeAddForm(colEl);
-      }
+      if (cancelBtn) closeAddForm(cancelBtn.closest('.column'));
     });
   }
 
+  // ── Theme ─────────────────────────────────────────────────────────────────
   function initTheme() {
-    const saved = localStorage.getItem('kanban-theme');
+    const saved       = localStorage.getItem('kanban-theme');
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    if (saved === 'dark' || (!saved && prefersDark)) {
-      document.documentElement.dataset.theme = 'dark';
-    } else {
-      document.documentElement.dataset.theme = 'light';
-    }
+    document.documentElement.dataset.theme =
+      (saved === 'dark' || (!saved && prefersDark)) ? 'dark' : 'light';
   }
 
   function toggleTheme() {
-    const isDark = document.documentElement.dataset.theme === 'dark';
-    const next = isDark ? 'light' : 'dark';
+    const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
     document.documentElement.dataset.theme = next;
     localStorage.setItem('kanban-theme', next);
   }
 
+  // ── Init ──────────────────────────────────────────────────────────────────
   document.addEventListener('DOMContentLoaded', () => {
     initTheme();
-    initUser();
-    loadCards();
-    renderAll();
     initDragDrop();
 
+    document.getElementById('authForm').addEventListener('submit', handleAuthSubmit);
+    document.getElementById('authToggleBtn').addEventListener('click', toggleAuthMode);
+    document.getElementById('logoutBtn').addEventListener('click', () => sb.auth.signOut());
     document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+
+    sb.auth.onAuthStateChange(async (_event, session) => {
+      if (session?.user) {
+        setUser(session.user);
+        hideAuth();
+        await loadCards();
+      } else {
+        setUser(null);
+        cards = [];
+        renderAll();
+        showAuth();
+      }
+    });
   });
 })();
