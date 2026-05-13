@@ -291,7 +291,11 @@
   }
 
   async function addCard(col, text) {
-    if (!currentBoard) { console.error('currentBoard is null'); return; }
+    if (!currentBoard) {
+      const allBoards = await loadBoards();
+      if (allBoards.length > 0) await selectBoard(allBoards[0]);
+      if (!currentBoard) { console.error('board 없음'); return; }
+    }
     const card = {
       id: uid(), user_id: currentUser.id, board_id: currentBoard.id,
       text, col, tags: [], priority: null, deadline: null,
@@ -658,11 +662,15 @@
 
     // Auth state listener
     sb.auth.onAuthStateChange(async (_event, session) => {
+      console.log('auth event:', _event, '/ board:', !!currentBoard);
       if (session?.user) {
         setUser(session.user);
         hideAuth();
-        const allBoards = await loadBoards();
-        if (allBoards.length > 0) await selectBoard(allBoards[0]);
+        if (!currentBoard) {
+          const allBoards = await loadBoards();
+          console.log('boards loaded:', allBoards.length);
+          if (allBoards.length > 0) await selectBoard(allBoards[0]);
+        }
       } else {
         setUser(null);
         currentBoard = null;
